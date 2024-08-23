@@ -1,1 +1,4 @@
 inventory
+*.key
+*.crt
+*.pub
