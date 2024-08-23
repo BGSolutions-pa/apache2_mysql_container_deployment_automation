@@ -1,0 +1,28 @@
+---
+- name: 'Uninstall unofficial docker packages.'
+  package:
+    name: "{{ item }}"
+    state: 'absent'
+  loop: "{{ unofficial_packages }}"
+
+- name: 'Add Docker GPG apt Key.'
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: 'Add Docker Repository.'
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: 'Install docker packages.'
+  package:
+    name: "{{ item }}"
+    state: 'latest'
+  loop: "{{ docker_packages }}"
+
+- name: 'Ensure docker group exists.'
+  ansible.builtin.group:
+    name: 'docker'
+    state: present
+...

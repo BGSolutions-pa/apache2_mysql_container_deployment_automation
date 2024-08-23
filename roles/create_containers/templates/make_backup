@@ -1,0 +1,67 @@
+#!/bin/bash
+
+function hash_file {
+   for DIR in $CONF_DIR; do
+      md5sum "$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT" \
+         >> "$BACKUP_DIR/$DIR$CDATE$DESC.$BACKUP_EXT.hash"; 
+      OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT.hash ";
+   done
+}
+
+BACKUP_DIR="/backup";
+CONF_DIR="apache2 mysql";
+CDATE=$(date +'_%F_%T');
+BACKUP_EXT="tar.gz";
+OUT_FILES=" ";
+
+# Enable autologin if its not already
+export AZCOPY_AUTO_LOGIN_TYPE=MSI;
+
+# If AZ is not installed, exit 1 code
+if ! command az > /dev/null; then 
+   exit 1; 
+fi
+az login --identity;
+
+# Copy config directories inside $BACKUP_DIR/files
+for DIR in $CONF_DIR; do 
+   cp -R "/opt/$DIR" "$BACKUP_DIR/files/"; 
+done
+
+# Compress each config directory inside $BACKUP_DIR
+for DIR in $CONF_DIR; do 
+   tar -zcvf "$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT" \
+             "$BACKUP_DIR/files";
+   OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT ";
+done
+
+hash_file;
+
+# Query az keyvault for the passphrase
+PASSPH=$(
+az keyvault secret show \
+   --id "https://containers-bck.vault.azure.net/secrets/gpgpassph" \
+   --query 'value';
+);
+
+# Encrypt tar file to upload
+for DIR in $CONF_DIR; do 
+   gpg --symmetric --batch   \
+      --passphrase "$PASSPH" \
+      --cipher-algo AES256   \
+      $BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT;
+   OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT ";
+done
+
+# Copy recursively the compressed encrypted files to az
+for DIR in $OUT_FILES; do 
+   azcopy copy   \
+      "$DIR.gpg" \
+      'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg';
+done
+# Copy recursively the md5sum files to az
+for DIR in $OUT_FILES; do 
+   azcopy copy   \
+      "$DIR.hash" \
+      'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg';
+done

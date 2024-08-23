@@ -1,0 +1,35 @@
+---
+- name: 'Download and install AzCopy.'
+  vars:
+    - cmd_o: -1
+  block:
+    
+    - name: 'Curl package url.'
+      shell: "curl -sSL -O https://packages.microsoft.com/config/{{ distro_name }}/{{ distro_version }}/packages-microsoft-prod.deb"
+      register: cmd_o
+      failed_when: cmd_o.rc > 0
+
+    - debug:
+        msg: "curl -sSL -O https://packages.microsoft.com/config/{{ distro_name }}/{{ distro_version }}/packages-microsoft-prod.deb"
+
+    - name: 'Install configuration package.'
+      shell: 'dpkg -i packages-microsoft-prod.deb'
+      register: cmd_o
+      failed_when: cmd_o.rc > 0
+
+    - name: 'Delete configuration package.'
+      shell: 'rm packages-microsoft-prod.deb'
+      register: cmd_o
+      failed_when: cmd_o.rc > 0
+
+    - name: 'Update ubuntu.'
+      ansible.builtin.apt:
+        upgrade: true
+        update_cache: true
+
+    - name: 'Install AzCopy.'
+      ansible.builtin.apt:
+        name: 'azcopy'
+        state: 'latest'
+        #upgrade: true
+        #update_cache: true

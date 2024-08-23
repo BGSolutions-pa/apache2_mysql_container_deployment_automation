@@ -1,0 +1,17 @@
+---
+#update_cache options
+# "false", "true"
+update_cache: true
+# Amount of retries in case update_cache fails.
+update_cache_retries: 5
+# ubuntu_upgrade options
+# "dist", "full", "no"(default), "safe", "yes"
+upgrade_choice: 'full'
+# Purge config files not needed if set to true.
+apt_purge: true
+# Clear out the local repository of retrieved package files.
+apt_clean: true
+# Clean config files not needed if set to true.
+apt_autoclean: true
+# Autoremove packages no longer needed if set to true.
+apt_autoremove: true

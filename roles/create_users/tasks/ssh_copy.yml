@@ -1,0 +1,9 @@
+- name: 'Copy ssh keys to guests.'
+  authorized_key:
+    user: "{{ user.name }}"
+    state: present
+    key: "{{ lookup('file', pubkey) }}"
+  with_fileglob:
+    - "files/{{user.name}}.pub"  
+  loop_control:
+    loop_var: 'pubkey'

@@ -1,0 +1,91 @@
+---
+#----------------------------------#
+# Check if changes have to be made 
+# to the .deb url and distro info
+# at /etc/os-release 
+#----------------------------------#
+distro_name:    'ubuntu'
+distro_version: '22.04'
+BLOB_URL:       'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg'
+GPG_PASSPH:     'https://containers-bck.vault.azure.net/secrets/gpgpassph/b938e0e64baf497893c427b276083e73'
+#----------------------------------#
+# Containerd.io bundles containerd 
+# and runc. Remove solo installs.
+#----------------------------------#
+unofficial_packages:
+  - 'docker.io'
+  - 'docker-compose'
+  - 'docker-compose-v2'
+  - 'docker-doc'
+  - 'podman-docker'
+  - 'containerd'
+  - 'runc'
+#----------------------------------#
+# Docker dependencies
+#----------------------------------#
+docker_packages:
+  - 'apt-transport-https'
+  - 'ca-certificates'
+  - 'curl'
+  - 'software-properties-common'
+  - 'python3-pip'
+  - 'virtualenv'
+  - 'python3-setuptools'
+  - 'docker-ce'
+  - 'docker-ce-cli'
+  - 'containerd.io' 
+  - 'docker-buildx-plugin'
+  - 'docker-compose-plugin'
+#----------------------------------#
+# Dockerfiles to be built
+#----------------------------------#
+docker_files:
+  - name: 'apache2server'
+    path: '/tmp/.docker/files/dockerfiles/apache2/'
+#----------------------------------#
+# Container networks
+#----------------------------------#
+lxc_networks:
+  - 'dockerspace'
+#----------------------------------#
+# Vhosts names to enable. 
+# ***BASENAME ONLY***
+#----------------------------------#
+apache2_vhosts:
+  - 'pablosdungeon'
+#----------------------------------#
+# Databases directories
+#----------------------------------#
+mysql_dbs:
+  - 'db1'
+#----------------------------------#
+# Apache2 containers to be created
+#----------------------------------#
+apache2_lxc:
+  - name:  'apache2'
+    image: 'apache2server'
+    state: 'started'
+    network: 
+      - name: 'dockerspace'
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /opt/apache2/html:/var/www/html
+      - /opt/apache2/ssl/certs:/etc/ssl/certs
+      - /opt/apache2/ssl/private:/etc/ssl/private
+      - /opt/apache2/sites-available:/etc/apache2/sites-available
+#----------------------------------#
+# MySQL containers to be created
+#----------------------------------#
+mysql_lxc:
+  - name:  'mysql'
+    image: 'mysql:8.4.0'
+    state: 'started'
+    network: 
+      - name: 'dockerspace'
+    ports:
+      - '3306:3306'
+    volumes:
+      - '/opt/mysql:/var/lib/mysql'
+#----------------------------------#

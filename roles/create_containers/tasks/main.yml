@@ -1,0 +1,30 @@
+---
+- name: 'Docker install tasks.'
+  include_tasks:
+    file: './install_docker.yml'
+  when: docker_install == 1
+
+- name: 'Create Apache container.'
+  include_tasks:
+    file: './apache2_lxc.yml'
+  when: apache2_container == 1
+
+- name: 'Create MySQL container.'
+  include_tasks:
+    file: './mysql_lxc.yml'
+  when: mysql_container == 1
+
+- name: 'Install AzCLI.'
+  include_tasks:
+    file: './install_azcli.yml'
+  when: install_azcli == 1
+
+- name: 'Install AzCopy.'
+  include_tasks:
+    file: './install_azcopy.yml'
+  when: install_azcopy == 1
+
+- name: 'Upload backup script.'
+  include_tasks:
+    file: './mkbackup.yml'
+  when: upload_backups == 1

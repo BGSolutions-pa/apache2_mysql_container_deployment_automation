@@ -1,0 +1,9 @@
+---
+- community.general.sudoers:
+    name: "{{ user.name }}"
+    user: "{{ user.name }}"
+    #group: "{{ user.name }}"
+    state: present
+    nopassword: "{{ user.nopasswd }}"
+    commands: "{{ user.commands }}"
+    validation: required

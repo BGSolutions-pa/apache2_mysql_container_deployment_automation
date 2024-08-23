@@ -1,0 +1,18 @@
+---
+#- Linux User Accounts --------------------#
+#Accounts tp be created IN the guest system.
+#------------------------------------------#
+user_accounts:
+  - name:       'ogudino'
+    #groups:    'sudo'
+    sudoers:    1
+    nopasswd:   1
+    commands:   'ALL'
+
+  - name:       'pmartinez'
+    #groups:    'pmartinez'
+    sudoers:    1
+    nopasswd:   1
+    commands:   '/usr/bin/sh'
+#------------------------------------------#
+...

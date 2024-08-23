@@ -1,0 +1,34 @@
+---
+- name: 'Create networks.'
+  docker_network:
+    name: "{{ item }}"
+  loop: "{{ lxc_networks }}"
+
+- name: 'Create MySQL Container.'
+  vars: 
+    rtpasswd: ''
+  block:
+
+    - name: 'Query keyvault.'
+      shell: |
+        az keyvault \
+           secret   \
+           show     \
+           --query 'value' \
+           --id https://containers-bck.vault.azure.net/secrets/MySQLRBenutzerPass/ec06c296738d4abdb6ca98ac46bed0ae
+      register: rtpasswd
+      failed_when: rtpasswd.rc > 0
+
+    - name: 'Create container.'
+      community.docker.docker_container:
+        name: "{{ item.name }}"
+        image: "{{ item.image }}"
+        volumes: "{{ item.volumes | default(omit) }}"
+        ports: "{{ item.ports }}"
+        restart: true
+        restart_policy: 'always'
+        detach: true
+        state: "{{ item.state }}"
+        env: "MYSQL_ROOT_PASSWORD={{rtpasswd.stdout}}"
+        networks: "{{ item.network }}"
+      loop: "{{ mysql_lxc }}"

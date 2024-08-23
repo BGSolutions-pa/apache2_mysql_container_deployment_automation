@@ -1,0 +1,20 @@
+---
+- name: '1. Import ubuntu updates role.'
+  include_role:
+    name: 'ubuntu_update'
+  when: ubuntu_update == 1
+    
+- name: '2. Add user accounts.'
+  include_role:
+    name: 'create_users'
+  when: create_users == 1
+    
+- name: '3. Import LAMP installation role.'
+  include_role:
+    name: 'ubuntu_lamp'
+  when: ubuntu_lamp == 1
+    
+- name: '4. Create Docker containers.'
+  include_role:
+    name: 'create_containers'
+  when: create_containers == 1

@@ -1,0 +1,8 @@
+<VirtualHost *:80>
+  ServerAdmin {{item.webserver_domain_name}}@{{item.domain_server_host}}
+  ServerName {{item.webserver_domain_name}}
+  ServerAlias {{item.webserver_domain_alias}}
+  DocumentRoot /var/www/{{item.webserver_domain_name}}
+  ErrorLog ${APACHE_LOG_DIR}/error.log
+  CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>

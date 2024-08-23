@@ -1,0 +1,94 @@
+---
+- name: 'Copy Apache2 container files.'
+  copy:
+    src: "../files/apache2/"
+    dest: "/opt/apache2/"
+
+- name: 'Create networks.'
+  docker_network:
+    name: "{{ item }}"
+  loop: "{{ lxc_networks }}"
+
+- name: 'Create temporary directory at /tmp/.dockerfiles/.'
+  file:
+    dest: "/tmp/.dockerfiles/apache2/{{item.name}}/"
+    state: directory
+  loop: "{{ docker_files }}"
+
+- name: 'Copy Apache2 Dockerfile templates.'
+  template:
+    src: '../templates/dockerfiles/apache2/Dockerfile'
+    dest: "/tmp/.dockerfiles/apache2/{{item.name}}/Dockerfile"
+  loop: "{{ docker_files }}"
+
+- name: 'Build Apache2 Dockerfiles.'
+  vars:
+    cmd_o: -1
+  shell: "cd /tmp/.dockerfiles/apache2/{{item.name}} ; docker build -t {{ item.name }} ."
+  register: cmd_o
+  failed_when: cmd_o.rc > 0
+  loop: "{{ docker_files }}"
+
+- name: 'Create Apache2 Linux Container.'
+  community.docker.docker_container:
+    name: "{{ item.name }}"
+    image: "{{ item.image }}"
+    volumes: "{{ item.volumes | default(omit) }}"
+    ports: "{{ item.ports }}"
+    restart: true
+    restart_policy: 'always'
+    detach: true
+    state: "{{ item.state }}"
+    env: "{{ item.env | default(omit) }}"
+    networks: "{{ item.network }}"
+  loop: "{{ apache2_lxc }}"
+
+- name: 'Disable default sites.'
+  vars:
+    cmd_o: -1
+  block:
+    - community.docker.docker_container_exec:
+        container: "{{ item.name }}"
+        command: "a2dissite 000-default"
+      register: cmd_o
+      failed_when: cmd_o.rc > 1
+      loop: "{{ apache2_lxc }}"
+
+    - community.docker.docker_container_exec:
+        container: "{{ item.name }}"
+        command: "a2dissite default-ssl"
+      register: cmd_o
+      failed_when: cmd_o.rc > 1
+      loop: "{{ apache2_lxc }}"
+
+- name: 'Enable ssl modules.'
+  community.docker.docker_container_exec:
+    container: "{{ item.name }}"
+    command: "a2enmod ssl"
+  loop: "{{ apache2_lxc }}"
+
+- name: 'Enable user defined sites vhosts.'
+  vars:
+    vhosts_d: ""
+    cmd_o: -1
+  block:
+    - name: 'Get defined vhosts list.'
+      set_fact:
+        vhosts_d: "{{vhosts_d}} {{ item }}"
+      loop: "{{ apache2_vhosts }}"
+
+    - name: 'Enable vhosts files.'
+      community.docker.docker_container_exec:
+        container: "{{ item.name }}"
+        command: "a2ensite {{vhosts_d}}"
+      loop: "{{ apache2_lxc }}"
+
+- name: 'Reload Apache2 service.'
+  vars:
+    cmd_o: -1
+  community.docker.docker_container_exec:
+    container: "{{ item.name }}"
+    command: 'service apache2 reload'
+  register: cmd_o
+  failed_when: cmd_o.rc > 0
+  loop: "{{ apache2_lxc }}"

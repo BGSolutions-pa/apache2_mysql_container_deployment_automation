@@ -1,0 +1,19 @@
+---
+#-----------------------#
+# Enabled playbook roles
+#-----------------------#
+create_users:       0
+ubuntu_update:      0
+ubuntu_lamp:        0
+create_containers:  1
+#-----------------------#
+# Create containers vars
+#-----------------------#
+docker_install:     0
+apache2_container:  0
+mysql_container:    1
+install_azcli:      0
+install_azcopy:     0
+upload_backups:     0
+#-----------------------#
+...

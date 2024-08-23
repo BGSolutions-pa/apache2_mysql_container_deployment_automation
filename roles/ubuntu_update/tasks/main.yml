@@ -1,0 +1,14 @@
+---
+- name: 'Update ubuntu packages list.'
+  ansible.builtin.apt:
+    update_cache: "{{update_cache}}"
+    update_cache_retries: "{{update_cache_retries}}"
+
+- name: 'Upgrade ubuntu packages.'
+  ansible.builtin.apt:
+    upgrade: "{{upgrade_choice}}"
+  
+- name: 'Packages cleanup'
+  ansible.builtin.apt:
+    autoclean: "{{apt_autoclean}}"
+    autoremove: "{{apt_autoremove}}"

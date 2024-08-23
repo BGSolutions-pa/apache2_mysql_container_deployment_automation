@@ -1,0 +1,7 @@
+---
+- name: 'Install AzCLI.'
+  vars:
+    cmd_o: -1
+  shell: 'curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash'
+  register: cmd_o
+  failed_when: cmd_o.rc > 0
