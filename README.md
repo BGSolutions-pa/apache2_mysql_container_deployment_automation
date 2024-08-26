@@ -4,7 +4,7 @@ An `Ansible` playbook that allows you to deploy Docker containers for:
 
 #Structure
 The playbook itself has only one task which reads the control variables and enables the roles to perform the tasks required by the users.
-
+```
 .
 ├── ansible.cfg
 ├── defaults
@@ -56,5 +56,5 @@ The playbook itself has only one task which reads the control variables and enab
 ├── site.yml
 └── tasks
     └── main.yml
-
+```
 23 directories, 27 files
