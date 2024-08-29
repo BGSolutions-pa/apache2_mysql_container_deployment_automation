@@ -2,3 +2,4 @@ inventory
 *.key
 *.crt
 *.pub
+*~

@@ -7,7 +7,10 @@
 distro_name:    'ubuntu'
 distro_version: '22.04'
 BLOB_URL:       'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg'
-GPG_PASSPH:     'https://containers-bck.vault.azure.net/secrets/gpgpassph/b938e0e64baf497893c427b276083e73'
+GPG_PASSPH:     'gpgpassph/b938e0e64baf497893c427b276083e73'
+VAULT_URL:      'https://containers-bck.vault.azure.net/secrets/'
+MYSQL_PASSPH:   'MySQLRBenutzerPass/ec06c296738d4abdb6ca98ac46bed0ae'
+BACKUP_DIR: 	 '/backup'
 #----------------------------------#
 # Containerd.io bundles containerd 
 # and runc. Remove solo installs.
