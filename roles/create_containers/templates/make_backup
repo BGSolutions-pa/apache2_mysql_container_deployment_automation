@@ -1,67 +1,70 @@
 #!/bin/bash
 
-function hash_file {
-   for DIR in $CONF_DIR; do
-      md5sum "$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT" \
-         >> "$BACKUP_DIR/$DIR$CDATE$DESC.$BACKUP_EXT.hash"; 
-      OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT.hash ";
+function az_login {
+   export AZCOPY_AUTO_LOGIN_TYPE=MSI;
+   if ! command az > /dev/null; then exit 1; else az login --identity; fi
+}
+
+function az_passph {
+   echo $(az keyvault secret show --id "{{VAULT_URL}}$1" --query 'value');
+}
+
+function apache2_backup {
+   for DIR in $APACHE2_LXC_DIR; do 
+      cp -R "/opt/$DIR" "$BACKUP_DIR/files/"; 
+      tar -zcvf "$BACKUP_DIR/$DIR$CDATE.tar.gz" "$BACKUP_DIR/files";
+      OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.tar.gz ";
    done
 }
 
-BACKUP_DIR="/backup";
-CONF_DIR="apache2 mysql";
+function mysql_backup {
+   PASSWD=$(az_passph "{{MYSQL_PASSPH}}"|sed 's/\"//g');
+   i=0;
+   for CONT in $MYSQL_LXC_NAME; do 
+      DBDUMP_NAME="mysql_dbdump_c$i";
+      docker exec -it $CONT mysqldump -u 'root' "-p$PASSWD" --all-databases > /backup/$DBDUMP_NAME$CDATE.sql;
+      OUT_FILES+="$BACKUP_DIR/$DBDUMP_NAME$CDATE.sql ";
+      i=$((i+1));
+   done
+}
+
+function hash_file {
+   for FILE in $OUT_FILES; do 
+      md5sum "$FILE" >> "$FILE.hash";
+      OUT_FILES+="$FILE.hash ";
+   done
+}
+
+function encrypt_file {
+   pass="$(az_passph "{{GPG_PASSPH}}")";
+   for FILE in $OUT_FILES; do 
+      if [[ $FILE != *'.hash'* ]]; then
+         gpg --symmetric --batch --passphrase "$pass" --cipher-algo AES256 $FILE;
+         OUT_FILES+="$FILE.gpg ";
+      fi
+   done
+}
+
+function az_upload {
+   for FILE in $OUT_FILES; do
+      if [[ $FILE = *'.gpg'* || $FILE = *'.hash'* ]]; then
+         azcopy copy "$FILE" "{{BLOB_URL}}";
+      fi
+   done
+}
+
+BACKUP_DIR="{{BACKUP_DIR}}";
 CDATE=$(date +'_%F_%T');
-BACKUP_EXT="tar.gz";
-OUT_FILES=" ";
+OUT_FILES="";
+MYSQL_LXC_DIR="{% if mysql_container == 1 %}{{"mysql"}}{% endif %}";
+APACHE2_LXC_DIR="{% if apache2_container == 1 %}{{"apache2"}}{% endif %}";
+CONF_DIR=$MYSQL_LXC_DIR$APACHE2_LXC_DIR;
+MYSQL_LXC_NAME="{% for con in mysql_lxc %}{{con.name}}{%endfor%}";
+APACHE2_LXC_NAME="{% for con in apache2_lxc %}{{con.name}}{%endfor%}";
 
-# Enable autologin if its not already
-export AZCOPY_AUTO_LOGIN_TYPE=MSI;
-
-# If AZ is not installed, exit 1 code
-if ! command az > /dev/null; then 
-   exit 1; 
-fi
-az login --identity;
-
-# Copy config directories inside $BACKUP_DIR/files
-for DIR in $CONF_DIR; do 
-   cp -R "/opt/$DIR" "$BACKUP_DIR/files/"; 
-done
-
-# Compress each config directory inside $BACKUP_DIR
-for DIR in $CONF_DIR; do 
-   tar -zcvf "$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT" \
-             "$BACKUP_DIR/files";
-   OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT ";
-done
-
+az_login;
+apache2_backup;
+mysql_backup;
 hash_file;
-
-# Query az keyvault for the passphrase
-PASSPH=$(
-az keyvault secret show \
-   --id "https://containers-bck.vault.azure.net/secrets/gpgpassph" \
-   --query 'value';
-);
-
-# Encrypt tar file to upload
-for DIR in $CONF_DIR; do 
-   gpg --symmetric --batch   \
-      --passphrase "$PASSPH" \
-      --cipher-algo AES256   \
-      $BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT;
-   OUT_FILES+="$BACKUP_DIR/$DIR$CDATE.$BACKUP_EXT ";
-done
-
-# Copy recursively the compressed encrypted files to az
-for DIR in $OUT_FILES; do 
-   azcopy copy   \
-      "$DIR.gpg" \
-      'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg';
-done
-# Copy recursively the md5sum files to az
-for DIR in $OUT_FILES; do 
-   azcopy copy   \
-      "$DIR.hash" \
-      'https://devstorageaccbgs.blob.core.windows.net/bgsdev-blbstg';
-done
+encrypt_file;
+az_upload;
