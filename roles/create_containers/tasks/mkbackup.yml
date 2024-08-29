@@ -9,12 +9,12 @@
 
 - name: 'Make backup directory.'
   ansible.builtin.file:
-    path: '/backup'
+    path:  "{{BACKUP_DIR}}"
     state: 'directory'
 
 - name: 'Make backup/files directory.'
   ansible.builtin.file:
-    path: '/backup/files'
+    path: "{{BACKUP_DIR}}/files"
     state: 'directory'
 
 - name: 'Copy backup script.'
