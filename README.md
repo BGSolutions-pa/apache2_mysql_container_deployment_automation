@@ -14,24 +14,16 @@ The playbook itself has only one task which reads the control variables and enab
 │       ├── plbook.yml
 │       ├── ublamp.yml
 │       └── ubupdate.yml
-├── inventory
 ├── README.md
 ├── roles
 │   ├── create_containers
 │   │   ├── files
-│   │   │   ├── apache2
-│   │   │   │   ├── html
-│   │   │   │   │   └── pablosdungeon.com
-│   │   │   │   │       └── index.html
-│   │   │   │   ├── sites-available
-│   │   │   │   │   └── pablosdungeon.conf
-│   │   │   │   └── ssl
-│   │   │   │       ├── certs
-│   │   │   │       │   └── localhost.crt
-│   │   │   │       └── private
-│   │   │   │           └── localhost.key
-│   │   │   └── mysql
-│   │   │       └── db1
+│   │   │   └── apache2
+│   │   │       ├── html
+│   │   │       │   └── pablosdungeon.com
+│   │   │       │       └── index.html
+│   │   │       └── sites-available
+│   │   │           └── pablosdungeon.conf
 │   │   ├── tasks
 │   │   │   ├── apache2_lxc.yml
 │   │   │   ├── install_azcli.yml
@@ -56,5 +48,6 @@ The playbook itself has only one task which reads the control variables and enab
 ├── site.yml
 └── tasks
     └── main.yml
+
+18 directories, 24 files
 ```
-23 directories, 27 files
